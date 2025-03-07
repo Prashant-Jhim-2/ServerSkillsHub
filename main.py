@@ -13,9 +13,9 @@ from passlib.pwd import genword
 
 
 app = FastAPI()
-load_dotenv()
+
 from fastapi.middleware.cors import CORSMiddleware
-SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+
 
 cred = credentials.Certificate("simple.json")
 firebase_admin.initialize_app(cred)
