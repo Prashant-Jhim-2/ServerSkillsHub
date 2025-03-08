@@ -6,8 +6,6 @@ from firebase_admin import credentials, firestore
 import bcrypt
 from datetime import datetime ,timedelta,timezone
 import os
-from sendgrid import SendGridAPIClient
-from sendgrid.helpers.mail import Mail
 
 from passlib.pwd import genword
 
