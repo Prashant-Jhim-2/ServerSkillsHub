@@ -777,3 +777,9 @@ def root (id:str):
     if arrofdata == None : 
         print("immmmm")
         return {"status":False}
+
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
