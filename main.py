@@ -30,6 +30,7 @@ firebase_config = {
 
 cred = credentials.Certificate(firebase_config)
 firebase_admin.initialize_app(cred)
+print("FireBase Initialised")
 db = firestore.client()
 usersref = db.collection("users")
 
@@ -86,7 +87,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+@app.get("/")
+def root():
+    print("i m working  fully")
+    return {"status":True}
 @app.post("/Check")
 def root(items:Item):
     docref = usersref.stream()
