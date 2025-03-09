@@ -6,7 +6,7 @@ from firebase_admin import credentials, firestore
 import bcrypt
 from datetime import datetime ,timedelta,timezone
 import os
-
+from mangum import Mangum
 from passlib.pwd import genword
 
 
@@ -778,8 +778,4 @@ def root (id:str):
         print("immmmm")
         return {"status":False}
 
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+handler = Mangum(app)
