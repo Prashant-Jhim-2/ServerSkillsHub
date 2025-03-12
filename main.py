@@ -778,4 +778,11 @@ def root (id:str):
         print("immmmm")
         return {"status":False}
 
+@app.get("/DeleteCourse/{id}")
+def root(id:str):
+    print("i m working")
+    docref = db.collection("courses").document(id) 
+    docref.delete()
+    return {"status":True}
+
 handler = Mangum(app)
