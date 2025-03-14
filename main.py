@@ -265,6 +265,12 @@ def root(id:str) :
             return {"status":False} 
     else:
         return {"status":False}
+@app.get("/CheckID/{id}")
+def root(id:str):
+    docref = db.collection('users').document(id)
+    doc = docref.get()
+    docdata = doc.to_dict()
+    return {'status':True,"Details":docdata}
 
 #Endpoint To Login 
 @app.post("/Login")
