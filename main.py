@@ -270,7 +270,11 @@ def root(id:str):
     docref = db.collection('users').document(id)
     doc = docref.get()
     docdata = doc.to_dict()
-    return {'status':True,"Details":docdata}
+    if docdata == None :
+        return {"status":False}
+    if docdata != None :
+     data = {'id':id,**docdata}
+     return {'status':True,"Details":data}
 
 #Endpoint To Login 
 @app.post("/Login")
