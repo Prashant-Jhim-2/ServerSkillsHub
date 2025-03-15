@@ -675,7 +675,7 @@ def root(RequestBody:AssignSchema):
     docref = db.collection('users').document(details['id'])
     docref2 = db.collection("ProfessorApplications").document(details['idofcard'])
     updatedoc = docref.update({"Type":details['Type']})
-    updatedoc2 = docref2.update({"Approved":True})
+    updatedoc2 = docref2.update({"Approved":True,"Type":details["Type"]})
     return {"status":True}
 
 #Endpoint to delete User 
