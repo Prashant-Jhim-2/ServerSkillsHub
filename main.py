@@ -673,10 +673,19 @@ class AssignSchema(BaseModel):
 def root(RequestBody:AssignSchema):
     details = RequestBody.dict()
     docref = db.collection('users').document(details['id'])
+    doc1 = docref.get()
     docref2 = db.collection("ProfessorApplications").document(details['idofcard'])
-    updatedoc = docref.update({"Type":details['Type']})
-    updatedoc2 = docref2.update({"Approved":True,"Type":details["Type"]})
-    return {"status":True}
+    doc2 = docref2.get()
+
+    if doc1.exists == True & doc2.exists == True:
+        updatedoc = docref.update({"Type":details['Type']})
+        updatedoc2 = docref2.update({"Approved":True,"Type":details["Type"]})
+        print(updatedoc,updatedoc2)
+        return {"status":True}
+    else :
+        return {'status':False}
+    
+    
 
 #Endpoint to delete User 
 @app.get("/deleteuser/{id}")
