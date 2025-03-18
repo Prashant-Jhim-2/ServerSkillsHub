@@ -270,9 +270,9 @@ def root(id:str):
     docref = db.collection('users').document(id)
     doc = docref.get()
     docdata = doc.to_dict()
-    if docdata == None :
+    if doc.exists == False :
         return {"status":False}
-    if docdata != None :
+    if doc.exists == True :
      data = {'id':id,**docdata}
      return {'status':True,"Details":data}
 
@@ -802,5 +802,60 @@ def root(id:str):
     docref = db.collection("courses").document(id) 
     docref.delete()
     return {"status":True}
+
+class ChatSchema(BaseModel):
+    details:dict 
+@app.post("/CheckChatID")
+def root(RequestBody:ChatSchema):
+    body = RequestBody.dict() 
+    detailsofchat = body['details']
+    print(detailsofchat)
+
+   # Part in which check database whether it can find user1 and user2 in chat database
+    docref = db.collection("chats").where("User1","==",detailsofchat["User1"]).where("User2",'==',detailsofchat["User2"])
+    docs = docref.stream()
+    id = None 
+    for doc in docs:
+        id = doc.id 
+   
+    if id  != None :
+      return {'status':True,"id":id}
+
+    
+    docref2 = db.collection('chats').where("User1",'==',detailsofchat['User2']).where("User2",'==',detailsofchat["User1"])
+    docs2 = docref2.stream()
+    id2 = None 
+    for doc in docs2:
+        id2 = doc.id 
+    if id2 != None :
+        return {"status":True,"id":id2}
+    
+    if id == None  and id2 == None : 
+        details = {
+            "User1":detailsofchat['User1'],
+            "User2":detailsofchat['User2'],
+            "Chat":[]
+        }
+        adddoc = db.collection('chats').add(details)
+        idofdoc = adddoc[1].id
+        print(idofdoc)
+        return {'status':True,"id":idofdoc}
+    
+@app.get("/AllUsers")
+def root():
+    docref = db.collection("users")
+    docs = docref.stream()
+    data = []
+    for doc in docs :
+        dataofuser = doc.to_dict()
+        details = {
+            "id":doc.id ,
+            "FullName":dataofuser["FullName"]
+        }
+        data.append(details)
+    
+    return {'status':True,"data":data}
+
+
 
 handler = Mangum(app)
