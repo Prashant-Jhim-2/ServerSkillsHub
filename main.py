@@ -883,4 +883,17 @@ def root(RequestBody:SendChatSchema):
     if doc.exists == False:
         return {"status":False}
 
+class DeleteSchema(BaseModel):
+    id:str
+    arr:list
+@app.post('/DeleteChat')
+def root(RequestBody:DeleteSchema):
+    body = RequestBody.dict()
+    docref = db.collection('chats').document(body['id'])
+    doc = docref.get() 
+    if doc.exists == True :
+        update = docref.update({"Chat":body['arr']})
+        return {'status':True}
+    if doc.exists == False :
+        return {'status':False}
 handler = Mangum(app)
