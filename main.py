@@ -832,6 +832,10 @@ def root(RequestBody:ChatSchema):
     
     if id == None  and id2 == None : 
         details = {
+            "User1Online":False,
+            "User2Online":False,
+            "User1Typing":False,
+            "User2Typing":False ,
             "User1":detailsofchat['User1'],
             "User2":detailsofchat['User2'],
             "Chat":[]
