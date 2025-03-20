@@ -841,6 +841,15 @@ def root(RequestBody:ChatSchema):
         print(idofdoc)
         return {'status':True,"id":idofdoc}
     
+@app.get('/Chat/{id}')
+def root(id:str):
+    docref = db.collection('chats').document(id)
+    doc = docref.get() 
+    if doc.exists == True :
+        data = doc.to_dict()
+        return {"status":True,"Data":data}
+    if doc.exists == False : 
+        return {'status':False}
 @app.get("/AllUsers")
 def root():
     docref = db.collection("users")
@@ -856,6 +865,18 @@ def root():
     
     return {'status':True,"data":data}
 
-
+class SendChatSchema(BaseModel):
+    id:str
+    chat: list 
+@app.post("/SendChat")
+def root(RequestBody:SendChatSchema):
+    body = RequestBody.dict()
+    docref = db.collection('chats').document(body['id'])
+    doc = docref.get()
+    if doc.exists ==  True :
+        update = docref.update({"Chat":body['chat']})
+        return {'status':True}
+    if doc.exists == False:
+        return {"status":False}
 
 handler = Mangum(app)
