@@ -896,4 +896,26 @@ def root(RequestBody:DeleteSchema):
         return {'status':True}
     if doc.exists == False :
         return {'status':False}
+    
+class TypingSchema(BaseModel):
+    idofchat:str
+    idofuser:str
+    status:bool
+
+@app.post("/Typing")
+def root(RequestBody:TypingSchema):
+    body = RequestBody.dict()
+    docref = db.collection("chats").document(body['idofchat'])
+    doc = docref.get()
+    if doc.exists == True :
+        data = doc.to_dict()
+        user1 = data['User1']
+        user2 = data['User2']
+        if user1 == body['idofuser'] : 
+            update = docref.update({"User1Typing":body['status']})
+            return {'status':True}
+        if user2 == body['idofuser'] :
+            update = docref.update({'User2Typing':body['status']})
+            return {"status":False}
+
 handler = Mangum(app)
