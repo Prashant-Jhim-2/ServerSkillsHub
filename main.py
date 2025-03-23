@@ -832,8 +832,8 @@ def root(RequestBody:ChatSchema):
     
     if id == None  and id2 == None : 
         details = {
-            "User1Online":False,
-            "User2Online":False,
+            "User1LastSeen":0,
+            "User2LastSeen":0,
             "User1Typing":False,
             "User2Typing":False ,
             "User1":detailsofchat['User1'],
@@ -918,4 +918,24 @@ def root(RequestBody:TypingSchema):
             update = docref.update({'User2Typing':body['status']})
             return {"status":False}
 
+class OnlineSchema(BaseModel):
+    idofuser:str
+    idofchat:str
+    lastseen:int
+@app.post("/Online")
+def root(RequestBody:OnlineSchema):
+    body = RequestBody.dict()
+    docref = db.collection('chats').document(body['idofchat'])
+    doc = docref.get()
+    if doc.exists == True :
+        data = doc.to_dict()
+        if data['User2'] == body["idofuser"]:
+            update = docref.update({"User2LastSeen" : body['lastseen']})
+            return {'status':True}
+        if data['User1'] == body["idofuser"]:
+            update = docref.update({"User1LastSeen" : body['lastseen']})
+            return {'status':True}
+        
+    if doc.exists == False:
+        return {'status':False}
 handler = Mangum(app)
