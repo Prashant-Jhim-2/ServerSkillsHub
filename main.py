@@ -838,7 +838,9 @@ def root(RequestBody:ChatSchema):
             "User2Typing":False ,
             "User1":detailsofchat['User1'],
             "User2":detailsofchat['User2'],
-            "Chat":[]
+            "Chat":[],
+            "NewMessages1":False,
+            "NewMessages2":False,
         }
         adddoc = db.collection('chats').add(details)
         idofdoc = adddoc[1].id
@@ -872,12 +874,20 @@ def root():
 class SendChatSchema(BaseModel):
     id:str
     chat: list 
+    idofuser:str
 @app.post("/SendChat")
 def root(RequestBody:SendChatSchema):
     body = RequestBody.dict()
     docref = db.collection('chats').document(body['id'])
     doc = docref.get()
     if doc.exists ==  True :
+        data = doc.to_dict()
+        if data['User1'] == body['idofuser'] :
+            updatedoc = docref.update({"NewMessages2":True})
+        if data['User2'] == body['idofuser'] :
+            updatedoc = docref.update({"NewMessages1":True})
+
+       
         update = docref.update({"Chat":body['chat']})
         return {'status':True}
     if doc.exists == False:
@@ -925,10 +935,12 @@ class OnlineSchema(BaseModel):
 @app.post("/Online")
 def root(RequestBody:OnlineSchema):
     body = RequestBody.dict()
+    print(body)
     docref = db.collection('chats').document(body['idofchat'])
     doc = docref.get()
     if doc.exists == True :
         data = doc.to_dict()
+       
         if data['User2'] == body["idofuser"]:
             update = docref.update({"User2LastSeen" : body['lastseen']})
             return {'status':True}
@@ -936,6 +948,29 @@ def root(RequestBody:OnlineSchema):
             update = docref.update({"User1LastSeen" : body['lastseen']})
             return {'status':True}
         
+    if doc.exists == False:
+        return {'status':False}
+    
+
+class NewMessages(BaseModel):
+    idofuser :str 
+    idofchat :str
+
+@app.post("/Seen") 
+def root(RequestBody:NewMessages):
+    body = RequestBody.dict()
+    docref = db.collection('chats').document(body['idofchat'])
+    doc = docref.get()
+    if doc.exists == True :
+        data = doc.to_dict()
+        if data['User1'] == body['idofuser'] :
+            updatedoc = docref.update({"NewMessages1":False})
+            print('i m working')
+            return {'status':True}
+        if data['User2'] == body['idofuser'] :
+            updatedoc = docref.update({"NewMessages2":False})
+            print('i m working')
+            return {'status':True}
     if doc.exists == False:
         return {'status':False}
 handler = Mangum(app)
