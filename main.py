@@ -549,7 +549,16 @@ def root(id:str):
     for doc in docs :
         dataarr.append({"id":doc.id,**doc.to_dict()})
     return {"status":len(dataarr) != 0 , "data":dataarr}
-
+class PaymentDetails(BaseModel):
+    id :str
+@app.post("/PaymentDetails")
+def root(RequestBody:PaymentDetails):
+    details = RequestBody.dict()
+    id = details['id']
+    colref = db.collection("Payments").document(id)
+    doc = colref.get()
+    dataarr = doc.to_dict()
+    return {"status":True,'data':dataarr}
 @app.get("/Payment/{id}")
 def root(id:str):
     colref = db.collection("Payments")
@@ -608,13 +617,62 @@ class RefundSchema(BaseModel):
     ProfileID:str
     PaymentID:str
     Reason:str
+    Approved:str
 
 @app.post("/Refund")
 def root(RequestBody:RefundSchema):
     Details = RequestBody.dict()
     sendtodb = db.collection("refunds").add(Details)
     return {"status":True}
-
+class RefundCheck(BaseModel):
+    UserID:str
+    PaymentID:str
+@app.post("/RefundExist")
+def root(RequestBody:RefundCheck):
+    Details = RequestBody.dict()
+    print(Details)
+    colref = db.collection("refunds")
+    query = colref.where("ProfileID",'==',Details["UserID"]).where("PaymentID",'==',Details["PaymentID"])
+   
+    docs = query.stream()
+    data = []
+    for doc in docs :
+        data.append({"id":doc.id,**doc.to_dict()})
+    if len(data) != 0 :
+        print(data)
+        return {"status":True , "data":data[0]}
+    if len(data) == 0 :
+        return {"status":False}
+class RefundEdit(BaseModel):
+    id:str
+    user:str
+    Reason:str
+@app.post("/RefundEdit")
+def root(RequestBody:RefundEdit):
+    Details = RequestBody.dict()
+    docref = db.collection("refunds").document(Details["id"])
+    doc = docref.get()
+    dataarr = doc.to_dict()
+    if dataarr["ProfileID"] == Details["user"]:
+        docref.update({"Reason":Details["Reason"]})
+        return {"status":True}
+    else:
+        return {"status":False}
+class RefundDelete(BaseModel):
+    id:str
+    user:str
+@app.post("/RefundDelete")
+def root(RequestBody:RefundDelete):
+    Details = RequestBody.dict()
+    print(Details)
+    docref = db.collection("refunds").document(Details["id"])
+    doc = docref.get()
+    dataarr = doc.to_dict()
+    if dataarr["ProfileID"] == Details["user"]:
+        docref.delete()
+        return {"status":True}
+    else:
+        return {"status":False}
 class ForgetSchema(BaseModel):
     Email:str
 @app.post("/ForgetPassword")
@@ -971,6 +1029,21 @@ def root(RequestBody:NewMessages):
             updatedoc = docref.update({"NewMessages2":False})
             print('i m working')
             return {'status':True}
+    if doc.exists == False:
+        return {'status':False}
+    
+class ChangeProfileImageSchema(BaseModel):
+    id:str
+    ImgSrc:str
+@app.post("/ChangeProfileImage")
+def root(RequestBody:ChangeProfileImageSchema):
+    body = RequestBody.dict()
+    print(body)
+    docref = db.collection('users').document(body['id'])
+    doc = docref.get()
+    if doc.exists == True :
+        updatedoc = docref.update({"ImgSrc":body['ImgSrc']})
+        return {'status':True}
     if doc.exists == False:
         return {'status':False}
 handler = Mangum(app)
