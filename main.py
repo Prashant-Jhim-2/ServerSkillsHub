@@ -506,15 +506,18 @@ def root(RequestBody:EnrolledSchema):
     sendtodb = db.collection("enrolled").add(details)
     return {"status":True}
 
+
 @app.get("/GetEnrolled/{id}")
 def root(id:str):
-    colref = db.collection("enrolled")
+    print(id)
+    colref = db.collection("Payments")
     query = colref.where("ProfileID","==",id)
     docs = query.stream()
     dataarr = []
     for doc in docs :
         dataarr.append({"id":doc.id,**doc.to_dict()})
-    return {"status":len(dataarr) == 0,"data":dataarr}
+    print(dataarr)
+    return {"status":len(dataarr) != 0,"data":dataarr}
 
 # Endpoint to Register Payment in Database 
 class PaymentSchema(BaseModel):
