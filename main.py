@@ -926,11 +926,64 @@ def root():
         dataofuser = doc.to_dict()
         details = {
             "id":doc.id ,
-            "FullName":dataofuser["FullName"]
+            "FullName":dataofuser["FullName"],
+            "ImgSrc":dataofuser["ImgSrc"]
         }
         data.append(details)
     
     return {'status':True,"data":data}
+
+@app.get("/Chats/{id}")
+def root(id:str):
+    print(id)
+    docref1 = db.collection("chats").where("User1",'==',id)
+    docs1 = docref1.stream() 
+    data1 = []
+    docref2 = db.collection('chats').where("User2",'==',id)
+    docs2 = docref2.stream()
+    data2 = []
+
+    for doc in docs1 : 
+        dataofuser = doc.to_dict()
+        details = {
+            "id":doc.id,
+            "User1":dataofuser['User1'],
+            "User2":dataofuser["User2"],
+            "User1LastSeen":dataofuser["User1LastSeen"],
+            "User2LastSeen":dataofuser["User2LastSeen"]
+             
+        }
+        data1.append(details)
+    
+    for doc in docs2 : 
+        dataofuser = doc.to_dict()
+        details = {
+            "id":doc.id,
+            "User1":dataofuser['User1'],
+            "User2":dataofuser["User2"],
+            "User1LastSeen":dataofuser["User1LastSeen"],
+            "User2LastSeen":dataofuser["User2LastSeen"]
+             
+        }
+        data2.append(details)
+    
+    print(data1,data2)
+
+    if len(data1) != 0 :
+        return {"status":True,"data":data1}
+    if len(data2) != 0 :
+        return {"status":True,"data":data2}
+    if len(data1) == 0 and len(data2) == 0 :
+        return {"status":False}
+
+
+
+
+    
+
+
+
+
 
 class SendChatSchema(BaseModel):
     id:str
