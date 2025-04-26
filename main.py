@@ -6,6 +6,7 @@ from firebase_admin import credentials, firestore
 import bcrypt
 from datetime import datetime ,timedelta,timezone
 import os
+
 from passlib.pwd import genword
 from mangum import Mangum
 
@@ -933,6 +934,49 @@ def root():
     
     return {'status':True,"data":data}
 
+class AlertSchema(BaseModel):
+    By:str
+    Page:str
+    User:str
+    Type:str 
+    time:str
+    Message:str
+@app.post('/SendAlert')
+def root(RequestBody:AlertSchema):
+    details = RequestBody.dict()
+    newdetails = {**details,"created":firestore.SERVER_TIMESTAMP}
+    docsave = db.collection('alerts').add(newdetails)
+    id = docsave[1].id 
+    return {'status':True}
+
+
+@app.get("/ClearAlerts/{id}")
+def root(id:str):
+    docs = db.collection('alerts').where("User","==",id).stream()
+    count = 0 
+    for doc in docs :
+        doc.reference.delete()
+        count += 1 
+
+    print(count)
+    return {'status':True}
+
+
+@app.get('/Alerts')
+def root():
+    docref = db.collection('alerts')
+    docs = docref.stream() 
+    Data = [] 
+    for doc in docs :
+       
+        details = {
+            "id":doc.id ,
+            **doc.to_dict()
+        }
+        Data.append(details)
+
+
+    return {'status':True,"Data":Data}
 @app.get("/Chats/{id}")
 def root(id:str):
     print(id)
