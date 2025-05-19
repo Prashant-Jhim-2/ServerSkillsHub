@@ -6,6 +6,7 @@ from firebase_admin import credentials, firestore
 import bcrypt
 from datetime import datetime ,timedelta,timezone
 import os
+import httpx
 
 from passlib.pwd import genword
 from mangum import Mangum
@@ -14,7 +15,7 @@ from mangum import Mangum
 app = FastAPI()
 load_dotenv()
 from fastapi.middleware.cors import CORSMiddleware
-
+RESENDAPI = os.getenv("RESEND_SECRET_KEY")
 firebase_config = {
     "type": "service_account",
     "project_id": os.getenv("FIREBASE_PROJECT_ID"),
@@ -316,10 +317,9 @@ class EditCourseSchema(BaseModel):
 @app.post("/UpdateCard")
 def root(RequestBody:EditCourseSchema):
     Details = RequestBody.dict()
-    print(Details['id'])
+    Data = Details['data']
     docref = db.collection("courses").document(Details['id'])
-    resp = docref.update(Details['data'])
-    print(Details["data"])
+    resp = docref.update({'Name':Data['Name'],'Description':Data['Description'],'ImgSrc':Data['ImgSrc'],'content':Data["Content"] })
     print(resp)
     return {"status":True}
 
@@ -936,6 +936,7 @@ def root():
 
 class AlertSchema(BaseModel):
     By:str
+    ByFullName:str
     Page:str
     User:str
     Type:str 
@@ -1146,4 +1147,45 @@ def root(RequestBody:ChangeProfileImageSchema):
         return {'status':True}
     if doc.exists == False:
         return {'status':False}
+    
+class EmailPostSchema(BaseModel):
+    email:str
+    domain:str
+@app.post('/send-email')
+async def root(RequestBody:EmailPostSchema):
+    body = RequestBody.dict()
+    print(body)
+    id = body['email']
+    Domain = body['domain']
+    url = "https://api.resend.com/emails"
+
+    headers = {
+        "Authorization": f"Bearer {RESENDAPI}",
+        "Content-Type": "application/json",
+    }
+
+    data = {
+        "from": "notifications@prashantjhim.xyz",  
+        "to": [id],
+        "subject": "You have a new message!",
+        "html": f"""
+            <div style="font-family: Arial, sans-serif;">
+                <h2>Skillshub 📝</h2>
+                <pYou're receiving this email because you have an account on Skillshub.</p>
+                <a href={Domain} style="display: inline-block; margin-top: 10px; padding: 10px 20px; background-color: #4f46e5; color: white; text-decoration: none; border-radius: 5px;">View Message</a>
+                <p style="margin-top: 20px; font-size: 12px; color: #999;">Thank you for using Skillshub📝 </p>
+            </div>
+        """,
+    }
+
+    async with httpx.AsyncClient() as client:
+        response = await client.post(url, headers=headers, json=data)
+    
+    if response.status_code == 200:
+        return {"message": "Email sent successfully!"}
+    else:
+        return {"error": response.text}
+
+
+
 handler = Mangum(app)
