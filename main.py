@@ -512,7 +512,7 @@ def root(RequestBody:EnrolledSchema):
 def root(id:str):
     print(id)
     colref = db.collection("Payments")
-    query = colref.where("ProfileID","==",id)
+    query = colref.where("ProfileID","==",id).where("status","==","Completed")
     docs = query.stream()
     dataarr = []
     for doc in docs :
@@ -535,7 +535,7 @@ class PaymentSchema(BaseModel):
     Currency:str 
     DateofPurchase:str
     mode:str
-    NextDate:str
+    Active:bool
    
 @app.post("/SuccessPayment")
 def root(RequestBody:PaymentSchema):
@@ -547,7 +547,7 @@ def root(RequestBody:PaymentSchema):
 @app.get("/Payments/{id}")
 def root(id:str):
     colref = db.collection("Payments")
-    query = colref.where("ProfileID",'==',id)
+    query = colref.where("ProfileID",'==',id).where("status",'==',"Completed")
     docs = query.stream()
     dataarr = []
     for doc in docs :
@@ -590,7 +590,7 @@ def root(RequestBody:UpdatePaymentSchema):
            id = doc.id
         if id != 'im':
             docref = db.collection("Payments").document(id)
-            docupdate = docref.update({"status":"Completed"})
+            docupdate = docref.update({"status":"Completed","Active":True})
     
        
     if Details["Type"] == "Subscription":
@@ -601,8 +601,28 @@ def root(RequestBody:UpdatePaymentSchema):
            id = doc.id
         if id != 'im':
             docref = db.collection("Payments").document(id)
-            docupdate = docref.update({"status":"Completed","NextDate":Details["NextDate"],"Payments":Details["data"]})
+            docupdate = docref.update({"status":"Completed","Active":True,"Payments":Details["data"]})
     
+    
+
+    if Details['Type'] == 'Recurring':
+        query = colref.where("PaymentID",'==',Details['id'])
+        docs = query.stream()
+        id = 'im'
+        for doc in docs :
+           id = doc.id
+        if id != 'im':
+            docref = db.collection("Payments").document(id)
+            status = Details['Active'] == True
+            compornot = 'Pending'
+            if status == True :
+                status = "Completed"
+            if status == False :
+                status = "Failed"
+            docupdate = docref.update({"status":compornot,"Active":Details['Active']})
+            print(docupdate)
+            
+
     
        
 
