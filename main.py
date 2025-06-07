@@ -165,7 +165,7 @@ def  root(data:CheckEmailSchema):
         arr = {"id":doc.id,**doc.to_dict()}
         id = doc.id 
         data.append(arr)
-    print(id)
+    print(len(data))
     if len(data) != 0 :
         return {"status":True,"id":id}
     if len(data) == 0 :
@@ -938,6 +938,29 @@ def root(id:str):
         return {"status":True,"Data":data}
     if doc.exists == False : 
         return {'status':False}
+
+
+@app.post("/SendCommunityChat")
+def root(RequestBody:ChatSchema):
+    body = RequestBody.dict()
+    details = body['details']
+    docref = db.collection('communitychats').add(details)
+    return {'status':True,'id':docref[1].id}
+    
+@app.get("/CommunityChats")
+def root():
+    docref = db.collection('communitychats')
+    docs = docref.stream() 
+    Data = [] 
+    for doc in docs :
+        details = {
+            "id":doc.id ,
+            **doc.to_dict()
+        }
+        Data.append(details)
+
+
+    return {'status':True,"Data":Data}
 @app.get("/AllUsers")
 def root():
     docref = db.collection("users")
