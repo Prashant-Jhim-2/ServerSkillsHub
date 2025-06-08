@@ -958,9 +958,45 @@ def root():
             **doc.to_dict()
         }
         Data.append(details)
-
-
     return {'status':True,"Data":Data}
+
+
+@app.post('/MarkImportant')
+def root(RequestBody:ChatSchema):
+    body = RequestBody.dict()
+    details = body['details']
+    print(details)
+    docref = db.collection('communitychats').document(details['Courseid'])
+    doc = docref.get()
+    if doc.exists == True :
+        markedimp = {
+            "FullName":details['FullName'],
+            "id":details['id'],
+        }
+        updatedoc = docref.update({"MarkedImp":markedimp})
+        return {'status':True}
+        
+    if doc.exists == False :
+        return {'status':False}
+
+
+@app.post('/DeleteCommunityChat')
+def root(RequestBody:ChatSchema):
+    body = RequestBody.dict()
+    details = body['details']
+    print(details)
+    docref = db.collection('communitychats').document(details['Chatid'])
+    doc = docref.get()
+    if doc.exists == True :
+       data = doc.to_dict()
+       if data['Profile'] == details['id'] :
+            docref.delete()
+            return {'status':True}
+       else:
+            return {'status':False}
+        
+    if doc.exists == False :
+        return {'status':False}
 @app.get("/AllUsers")
 def root():
     docref = db.collection("users")
