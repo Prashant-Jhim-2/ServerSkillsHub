@@ -372,6 +372,17 @@ def root(id:str):
     arrofdata = doc.to_dict()
     return {"status":True,"data":arrofdata}
 
+
+
+@app.get("/GetCourse/{id}")
+def root(id:str):
+    docref = db.collection("courses").document(id)
+    doc = docref.get()
+    arrofdata = doc.to_dict()
+    if arrofdata != None :
+        return {"status":True,"data":arrofdata}
+    if arrofdata == None :
+        return {"status":False}
 @app.get("/GetVideos/{id}")
 def root(id:str):
     colref = db.collection("Videos")
@@ -574,6 +585,28 @@ def root(id:str):
     return {"status":True,"data":data}
 class UpdatePaymentSchema(BaseModel):
     Details:dict
+
+
+@app.get('/GetEnrolledStudents/{id}')
+def root(id:str):
+    colref = db.collection("Payments")
+    query = colref.where("CourseID",'==',id).where("status",'==',"Completed")
+    docs = query.stream()
+    dataarr = []
+    for doc in docs :
+        details = doc.to_dict()
+        colref = db.collection("users").document(details["ProfileID"])
+        doc = colref.get()
+        data = doc.to_dict()
+        newdetails = {
+            "id":doc.id,
+            "FullName":data["FullName"],
+        }
+        dataarr.append(newdetails)
+        
+    print(dataarr)
+    return {"status":len(dataarr) != 0,"data":dataarr}
+
 
 @app.post("/UpdatePayment")
 def root(RequestBody:UpdatePaymentSchema):
