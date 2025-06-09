@@ -980,18 +980,17 @@ def root(RequestBody:ChatSchema):
     docref = db.collection('communitychats').add(details)
     return {'status':True,'id':docref[1].id}
     
-@app.get("/CommunityChats")
-def root():
-    docref = db.collection('communitychats')
-    docs = docref.stream() 
-    Data = [] 
-    for doc in docs :
-        details = {
-            "id":doc.id ,
-            **doc.to_dict()
-        }
-        Data.append(details)
-    return {'status':True,"Data":Data}
+@app.get("/CommunityChats/{id}")
+def root(id: str):
+    print(id)
+    colref = db.collection('communitychats')
+    query = colref.where("Courseid", "==", id)
+    docs = query.stream()
+    data = []
+    for doc in docs:
+        details = {"id": doc.id, **doc.to_dict()}
+        data.append(details)
+    return {'status': len(data) != 0, "Data": data}
 
 
 @app.post('/MarkImportant')
