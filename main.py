@@ -518,7 +518,20 @@ def root(RequestBody:EnrolledSchema):
     sendtodb = db.collection("enrolled").add(details)
     return {"status":True}
 
-
+@app.get('/LastChat/{id}')
+def root(id:str):
+    colref = db.collection("communitychats")
+    query = colref.where("Courseid","==",id)
+    docs = query.stream()
+    data = []
+    for doc in docs:
+        details = {"id": doc.id, **doc.to_dict()}
+        data.append(details)    
+    if len(data) != 0 :
+        return {"status":True,"data":data[0]}  
+    if len(data) == 0 :
+        return {"status":False,"data":[]}
+   
 @app.get("/GetEnrolled/{id}")
 def root(id:str):
     print(id)
@@ -991,6 +1004,7 @@ def root(id: str):
         details = {"id": doc.id, **doc.to_dict()}
         data.append(details)
     return {'status': len(data) != 0, "Data": data}
+
 
 
 @app.post('/MarkImportant')
