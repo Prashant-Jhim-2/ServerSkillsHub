@@ -1014,18 +1014,42 @@ def root(RequestBody:ChatSchema):
     print(details)
     docref = db.collection('communitychats').document(details['Courseid'])
     doc = docref.get()
-    if doc.exists == True :
-        markedimp = {
-            "FullName":details['FullName'],
-            "id":details['id'],
+    if doc.exists == True:
+        markedimp = doc.to_dict().get("MarkedImp", [])
+        # Add the new marked important entry if not already present
+        new_entry = {
+            "FullName": details['FullName'],
+            "id": details['id'],
         }
+        if new_entry not in markedimp:
+            markedimp.append(new_entry)
         updatedoc = docref.update({"MarkedImp":markedimp})
         return {'status':True}
         
     if doc.exists == False :
         return {'status':False}
 
-
+@app.post('/UnmarkImportant')
+def root(RequestBody:ChatSchema):
+    body = RequestBody.dict()
+    details = body['details']
+    print(details)
+    docref = db.collection('communitychats').document(details['Courseid'])
+    doc = docref.get()
+    if doc.exists == True:
+        markedimp = doc.to_dict().get("MarkedImp", [])
+                # Remove the marked important entry if present
+        new_entry = {
+                    "FullName": details['FullName'],
+                    "id": details['id'],
+                }
+        markedimp = [entry for entry in markedimp if entry != new_entry]
+        updatedoc = docref.update({"MarkedImp": markedimp})
+        return {'status': True}
+    if doc.exists == False:
+        return {'status': False}      
+    
+     
 @app.post('/DeleteCommunityChat')
 def root(RequestBody:ChatSchema):
     body = RequestBody.dict()
