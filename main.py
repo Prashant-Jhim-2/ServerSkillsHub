@@ -1300,6 +1300,38 @@ def root(RequestBody:ChangeProfileImageSchema):
 class EmailPostSchema(BaseModel):
     email:str
     domain:str
+
+class ChapterSchema(BaseModel):
+    title: str
+    index: int
+    pdfUrl: str
+    courseId: str
+
+@app.post('/upload-chapter')
+def root(RequestBody: ChapterSchema):
+    details = RequestBody.dict()
+    print(details)
+    # Add to chapters collection
+    sendtodb = db.collection("chapters").add(details)
+    id = sendtodb[1].id
+    return {"status": True, "id": id}
+
+@app.get('/chapters/{courseId}')
+def root(courseId: str):
+    # Query chapters collection for the specific course
+    colref = db.collection("chapters")
+    query = colref.where("courseId", "==", courseId)
+    docs = query.stream()
+    
+    data = []
+    for doc in docs:
+        data.append({"id": doc.id, **doc.to_dict()})
+    
+    # Sort chapters by index
+    data.sort(key=lambda x: x['index'])
+    
+    return {"status": True, "data": data}
+
 @app.post('/send-email')
 async def root(RequestBody:EmailPostSchema):
     body = RequestBody.dict()
