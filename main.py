@@ -278,6 +278,16 @@ def root(id:str):
      data = {'id':id,**docdata}
      return {'status':True,"Details":data}
 
+
+@app.get("/FetchCourse/{id}")
+def root(id:str):
+    docref = db.collection("courses").where("ProfessorId","==",id)
+    docs = docref.stream()
+    data = []
+    for doc in docs:
+        data.append({"id": doc.id, **doc.to_dict()})
+    return {"status":True,"data":data}
+
 #Endpoint To Login 
 @app.post("/Login")
 def root(RequestBody:LoginSchema):
