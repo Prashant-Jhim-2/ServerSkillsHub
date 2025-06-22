@@ -278,6 +278,39 @@ def root(id:str):
      data = {'id':id,**docdata}
      return {'status':True,"Details":data}
 
+@app.get("/DeleteDraft/{id}")
+def root(id:str):
+    docref = db.collection("Quiz").document(id)
+    docref.delete()
+    return {"status":True}
+
+
+@app.get("/FetchDrafts/{id}")
+def root(id:str):
+    docref = db.collection("Quiz").where("ProfessorID","==",id).where("status","==",False)
+    docs = docref.stream()
+    data = []
+    for doc in docs:
+        data.append({"id": doc.id, **doc.to_dict()})
+    return {"status":True,"data":data}
+class QuizSchema(BaseModel):
+    status:bool
+    CourseID:str
+    ProfessorID:str
+    CourseName:str
+    Name:str
+    DueDate:str
+    DueTime:str
+    TimeLimit:int
+    Questions:list
+    Marks:int
+@app.post("/PostQuiz")
+def root(RequestBody:QuizSchema):
+    details = RequestBody.dict()
+    print(details)
+    colref = db.collection("Quiz")
+    sendtodb = colref.add(details)
+    return {"status":True}
 
 @app.get("/FetchCourse/{id}")
 def root(id:str):
