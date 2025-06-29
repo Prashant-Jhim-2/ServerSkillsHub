@@ -210,6 +210,18 @@ def root(RequestBody:VerifyInstance):
     print(id)
     return {"status":True,"id":id}
 
+@app.get("/FetchStudentAnswers/{id}/{studentId}")
+def root(id:str, studentId:str):
+    docref = db.collection("studentquiz").where("Quiz","==",id).where("Student","==",studentId)
+    docs = docref.stream()
+    data = []
+    for doc in docs:
+        data.append({"id": doc.id, **doc.to_dict()})
+        
+    print(data)
+    return {"status":True,"data":data}
+
+
 class UpdateSchema(BaseModel):
     Email:str
     Details:dict
@@ -310,7 +322,116 @@ def root(RequestBody:QuizSchema):
     print(details)
     colref = db.collection("Quiz")
     sendtodb = colref.add(details)
-    return {"status":True}
+    return {"status":True,"id":sendtodb[1].id}
+
+@app.get("/FetchQuiz/{id}")
+def root(id:str):
+    docref = db.collection("Quiz").document(id)
+    docexist = docref.get()
+    if docexist.exists == True :
+        data = {"id":docexist.id,**docexist.to_dict()}
+        return {"status":True,"data":data}
+    if docexist.exists == False :
+        return {"status":False}
+
+class SaveQuizSchema(BaseModel):
+    TotalMarks:int
+    Quiz:str
+    details:dict 
+    Student:str
+@app.post("/SaveQuiz")
+def root(RequestBody:SaveQuizSchema):
+    details = RequestBody.dict()
+    index = details['details']['index']
+    Ans = details['details']['Answer']
+    TotalMarks = details['TotalMarks']
+   
+    
+    # First check if the quiz exists
+    colref = db.collection('Quiz').document(details['Quiz'])
+    doc = colref.get()
+    if doc.exists == True:
+        quiz_data = doc.to_dict()
+        Questions = quiz_data['Questions']
+        
+        
+        Answers = []
+        for ques in Questions :
+            Answers.append({
+                "Question":ques['Question'],        
+                "Marks":ques['Marks'],
+                "RightOption":ques.get('RightOption'),
+                "Options":ques.get('Options'),
+                "GainedMarks":0,
+                "Answer":None
+            })
+
+        # Check if student quiz entry exists
+        colref2 = db.collection("studentquiz").where("Quiz","==",details["Quiz"]).where("Student","==",details['Student'])
+        docs = colref2.stream()
+        existing_entries = []
+        
+        for doc in docs:
+            existing_entries.append({"id": doc.id, **doc.to_dict()})
+            
+       
+            
+        if len(existing_entries) == 0 :
+           index = details['details']['index']
+           Answers[index]['Answer'] = details['details']['Answer']
+           
+           if Answers[index]["RightOption"] != None :
+                if Answers[index]['RightOption']['value'] == Ans :
+                    print("Correct")
+                    Answers[index]['GainedMarks'] = Answers[index]['Marks']
+                    print(Answers[index]['GainedMarks'])
+                else:
+                    Answers[index]['GainedMarks'] = 0
+                    print(Answers[index]['GainedMarks'])
+            
+           
+           newquiz = {
+            "Quiz":details["Quiz"],
+            "Student":details["Student"],
+            "Answers":Answers,
+             "TotalMarks":TotalMarks
+           }
+
+           sendtodb = db.collection("studentquiz").add(newquiz)
+           idofdoc = sendtodb[1].id
+           if idofdoc != None :
+               return {"status":True}
+
+        if len(existing_entries) != 0 :
+            Answers = existing_entries[0]['Answers']
+            ithasoptions = Answers[index]['RightOption'] != None
+            if ithasoptions == True :
+                print(index)
+                print(Answers[index]['RightOption']['value'])
+                print(Answers[index]['Answer'])
+                
+                if Answers[index]['RightOption']['value'] == Ans :
+                    print("Correct")
+                    Answers[index]['GainedMarks'] = Answers[index]['Marks']
+                else:
+                   
+                   Answers[index]['GainedMarks'] = 0
+            if ithasoptions == False :
+                print("No Options")
+            docref2 = db.collection("studentquiz").document(existing_entries[0]['id'])
+           
+
+            Answers[index]['Answer'] = Ans
+            docref2.update({"Answers":Answers})
+            return {"status":True}
+       
+
+
+      
+
+
+    else:
+        return {"status": False}
 
 @app.get("/FetchCourse/{id}")
 def root(id:str):
