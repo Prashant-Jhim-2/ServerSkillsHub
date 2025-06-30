@@ -217,9 +217,13 @@ def root(id:str, studentId:str):
     data = []
     for doc in docs:
         data.append({"id": doc.id, **doc.to_dict()})
-        
-    print(data)
-    return {"status":True,"data":data}
+    quizdata = []
+    if len(data) > 0 :
+        quizdata = data[0] 
+        return {"status":True,"answers":quizdata['Answers'],"Submitted":quizdata['Submitted']}
+    else : 
+        return {"status":False}
+   
 
 
 class UpdateSchema(BaseModel):
@@ -334,9 +338,24 @@ def root(id:str):
     if docexist.exists == False :
         return {"status":False}
 
+class SubmitQuizSchema(BaseModel):
+    id:str
+    Student:str
+    Answers:list
+@app.post("/SubmitQuiz")
+def root(RequestBody:SubmitQuizSchema):
+    details = RequestBody.dict()
+    print(details)
+    colref = db.collection("studentquiz").where("Quiz","==",details['id']).where("Student","==",details['Student'])
+    docs = colref.stream()
+    for doc in docs:
+        doc.reference.update({"Answers":details['Answers'] , "Submitted":True})
+    return {"status":True}
+
 class SaveQuizSchema(BaseModel):
     TotalMarks:int
     Quiz:str
+    Answer:str
     details:dict 
     Student:str
 @app.post("/SaveQuiz")
@@ -359,12 +378,16 @@ def root(RequestBody:SaveQuizSchema):
         for ques in Questions :
             Answers.append({
                 "Question":ques['Question'],        
+                "QuestionType":ques['QuestionType'],
+                "File":ques.get('File'),
                 "Marks":ques['Marks'],
                 "RightOption":ques.get('RightOption'),
                 "Options":ques.get('Options'),
                 "GainedMarks":0,
                 "Answer":None
             })
+
+        print(Answers)
 
         # Check if student quiz entry exists
         colref2 = db.collection("studentquiz").where("Quiz","==",details["Quiz"]).where("Student","==",details['Student'])
@@ -388,13 +411,16 @@ def root(RequestBody:SaveQuizSchema):
                 else:
                     Answers[index]['GainedMarks'] = 0
                     print(Answers[index]['GainedMarks'])
+
+           
             
            
            newquiz = {
             "Quiz":details["Quiz"],
             "Student":details["Student"],
             "Answers":Answers,
-             "TotalMarks":TotalMarks
+             "TotalMarks":TotalMarks,
+             "Submitted":False ,
            }
 
            sendtodb = db.collection("studentquiz").add(newquiz)
@@ -415,9 +441,17 @@ def root(RequestBody:SaveQuizSchema):
                     Answers[index]['GainedMarks'] = Answers[index]['Marks']
                 else:
                    
-                   Answers[index]['GainedMarks'] = 0
+                   Answers[index]['GainedMarks'] = 0 
+
             if ithasoptions == False :
                 print("No Options")
+
+
+            if details['details']["File"] != '':
+                Answers[index]['File'] = details['details']["File"]
+
+   
+
             docref2 = db.collection("studentquiz").document(existing_entries[0]['id'])
            
 
